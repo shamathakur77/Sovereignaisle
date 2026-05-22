@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOVEREIGN — Aisle of Source</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0d0c0a; --paper:#f5f0e8; --gold:#c9a84c;
+    --rust:#b85c38; --teal:#3a7d74; --ink2:#16140f;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--ink);color:var(--paper);font-family:"DM Mono",monospace;overflow-x:hidden}
+
+  /* grain */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  /* drifting atmosphere glow */
+  body::after{
+    content:"";position:fixed;inset:-40%;z-index:0;pointer-events:none;
+    background:radial-gradient(circle at 30% 30%,rgba(201,168,76,.10),transparent 45%),
+               radial-gradient(circle at 70% 65%,rgba(58,125,116,.10),transparent 45%);
+    animation:drift 26s ease-in-out infinite alternate;
+  }
+  @keyframes drift{to{transform:translate(4%,3%) scale(1.1)}}
+
+  /* floating dust */
+  .dust{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+  .dust i{position:absolute;bottom:-10px;width:3px;height:3px;border-radius:50%;
+    background:var(--gold);opacity:0;animation:rise linear infinite}
+  @keyframes rise{
+    0%{transform:translateY(0) translateX(0);opacity:0}
+    10%{opacity:.5}
+    90%{opacity:.4}
+    100%{transform:translateY(-105vh) translateX(30px);opacity:0}
+  }
+
+  /* HEADER */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:18px 28px;border-bottom:1px solid rgba(201,168,76,.25);
+    background:linear-gradient(180deg,rgba(13,12,10,.95),rgba(13,12,10,.6));
+    backdrop-filter:blur(6px);
+  }
+  .brand{font-family:"Cormorant Garamond",serif;font-size:24px;letter-spacing:3px;font-weight:600;color:var(--gold)}
+  .brand small{display:block;font-family:"DM Mono",monospace;font-size:9px;letter-spacing:4px;color:var(--paper);opacity:.6}
+  .cart-btn{
+    border:1px solid var(--gold);color:var(--gold);background:transparent;
+    padding:8px 16px;font-family:"DM Mono",monospace;font-size:12px;letter-spacing:1px;cursor:pointer;
+    border-radius:2px;transition:.25s;display:flex;gap:8px;align-items:center;
+  }
+  .cart-btn:hover{background:var(--gold);color:var(--ink)}
+  .cart-count{background:var(--rust);color:var(--paper);border-radius:50%;width:18px;height:18px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:10px}
+
+  /* HERO */
+  .hero{
+    height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;position:relative;z-index:2;
+  }
+  .hero .asterisk{font-size:60px;color:var(--rust);margin-bottom:10px;
+    text-shadow:0 0 30px rgba(184,92,56,.5);animation:spin 20s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hero h1{font-family:"Cormorant Garamond",serif;font-size:clamp(40px,9vw,110px);
+    font-weight:700;line-height:.9;letter-spacing:-1px}
+  .hero h1 em{color:var(--gold);font-style:italic}
+  .hero p{margin-top:22px;font-size:13px;letter-spacing:2px;opacity:.7;max-width:480px}
+  .scroll-cue{position:absolute;bottom:34px;font-size:10px;letter-spacing:3px;opacity:.5;
+    animation:bob 2s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(8px)}}
+
+  /* AISLE / SHELF */
+  .aisle{padding:60px 0 120px;position:relative;z-index:2}
+  .aisle-head{text-align:center;margin-bottom:50px}
+  .aisle-head h2{font-family:"Cormorant Garamond",serif;font-size:42px;color:var(--gold)}
+  .aisle-head span{font-size:11px;letter-spacing:4px;opacity:.5}
+
+  .shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:1px;max-width:1240px;margin:0 auto;background:rgba(201,168,76,.15)}
+
+  .product{
+    background:radial-gradient(120% 90% at 50% 0%,#1c1a13 0%,var(--ink2) 55%,#100e09 100%);
+    padding:0;position:relative;cursor:grab;overflow:hidden;
+    border:1px solid transparent;transition:border-color .3s,transform .5s,box-shadow .5s;
+    opacity:0;transform:translateY(40px);
+  }
+  .product.in{opacity:1;transform:translateY(0)}
+  .product:hover{border-color:rgba(201,168,76,.45);box-shadow:inset 0 0 60px rgba(201,168,76,.06)}
+  /* shelf lip under the 3D */
+  .product .stage{position:relative}
+  .product .stage::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:14px;
+    background:linear-gradient(180deg,rgba(201,168,76,.35),rgba(201,168,76,.05));
+    box-shadow:0 2px 8px rgba(0,0,0,.6);
+  }
+  .product canvas{display:block;width:100%;height:320px;touch-action:none}
+
+  .product-meta{padding:22px 24px 26px;border-top:1px solid rgba(201,168,76,.15);position:relative;z-index:2}
+  .tag{font-size:9px;letter-spacing:3px;color:var(--teal);margin-bottom:6px}
+  .product-meta h3{font-family:"Cormorant Garamond",serif;font-size:26px;font-weight:600;margin-bottom:6px}
+  .product-meta .desc{font-size:11px;line-height:1.6;opacity:.6;margin-bottom:16px;min-height:54px}
+  .price-row{display:flex;justify-content:space-between;align-items:flex-end}
+  .price{font-family:"Cormorant Garamond",serif;font-size:30px;color:var(--gold)}
+  .price small{font-size:13px;opacity:.6;font-family:"DM Mono",monospace}
+  .barcode{height:34px;display:flex;align-items:flex-end;gap:1.5px}
+  .barcode i{display:block;width:2px;background:var(--paper);opacity:.85}
+  .barcode-num{font-size:8px;letter-spacing:2px;opacity:.5;margin-top:3px;text-align:center}
+  .add{margin-top:18px;width:100%;display:block;text-align:center;text-decoration:none;
+    background:transparent;border:1px dashed var(--gold);
+    color:var(--gold);padding:11px;font-family:"DM Mono",monospace;font-size:11px;letter-spacing:2px;
+    cursor:pointer;transition:.25s;border-radius:2px}
+  .add:hover{background:var(--gold);color:var(--ink);border-style:solid}
+  .add.added{background:var(--teal);border-color:var(--teal);color:var(--paper)}
+
+  /* RECEIPT CART */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;opacity:0;
+    pointer-events:none;transition:.3s;backdrop-filter:blur(3px)}
+  .overlay.open{opacity:1;pointer-events:all}
+  .receipt{position:fixed;top:0;right:0;height:100%;width:380px;max-width:90vw;
+    background:var(--paper);color:var(--ink);z-index:301;transform:translateX(100%);
+    transition:transform .4s cubic-bezier(.6,.1,.2,1);padding:30px 26px;overflow-y:auto;
+    box-shadow:-10px 0 40px rgba(0,0,0,.4)}
+  .receipt.open{transform:translateX(0)}
+  .receipt::after{content:"";position:absolute;bottom:0;left:0;right:0;height:14px;
+    background:repeating-linear-gradient(135deg,var(--paper) 0 8px,transparent 8px 16px),
+    linear-gradient(var(--paper),var(--paper));
+    -webkit-mask:repeating-linear-gradient(90deg,#000 0 10px,transparent 10px 20px)}
+  .r-head{text-align:center;border-bottom:2px dashed var(--ink);padding-bottom:16px;margin-bottom:16px}
+  .r-head h3{font-family:"Cormorant Garamond",serif;font-size:30px;font-weight:700;letter-spacing:1px}
+  .r-head small{font-size:9px;letter-spacing:2px;opacity:.6;display:block;margin-top:4px}
+  .r-line{display:flex;justify-content:space-between;font-size:11px;padding:9px 0;
+    border-bottom:1px dotted rgba(13,12,10,.25)}
+  .r-line .n{max-width:70%}
+  .r-line .n em{display:block;font-size:9px;opacity:.5;font-style:normal}
+  .r-line button{background:none;border:none;color:var(--rust);cursor:pointer;font-size:14px;margin-left:8px}
+  .r-empty{text-align:center;font-size:11px;opacity:.5;padding:40px 0}
+  .r-total{border-top:2px dashed var(--ink);margin-top:14px;padding-top:14px;
+    display:flex;justify-content:space-between;font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:700}
+  .r-foot{text-align:center;font-size:9px;letter-spacing:1px;opacity:.6;margin-top:22px;line-height:1.8}
+  .checkout{width:100%;margin-top:18px;background:var(--ink);color:var(--paper);border:none;
+    padding:14px;font-family:"DM Mono",monospace;font-size:12px;letter-spacing:2px;cursor:pointer;border-radius:2px;
+    transition:.25s}
+  .checkout:hover{background:var(--rust);box-shadow:0 0 24px rgba(184,92,56,.5)}
+  .close-r{position:absolute;top:18px;right:18px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink)}
+
+  /* FOOTER */
+  footer{position:relative;z-index:2;text-align:center;padding:50px 20px 70px;
+    border-top:1px solid rgba(201,168,76,.2)}
+  footer .kofi{display:inline-block;background:var(--gold);color:var(--ink);text-decoration:none;
+    padding:11px 22px;font-size:12px;letter-spacing:1px;border-radius:2px;margin-bottom:24px;transition:.25s}
+  footer .kofi:hover{box-shadow:0 0 24px rgba(201,168,76,.5)}
+  .socials{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:11px}
+  .socials a{color:var(--paper);opacity:.6;text-decoration:none;letter-spacing:1px;transition:.2s}
+  .socials a:hover{opacity:1;color:var(--gold)}
+  .copy{font-size:9px;letter-spacing:2px;opacity:.4;margin-top:24px}
+</style>
+</head>
+<body>
+
+<div class="dust" id="dust"></div>
+
+<header>
+  <div class="brand">SOVEREIGN<small>BY SOURCE · AISLE 7</small></div>
+  <div class="cart-btn" style="cursor:default;border-style:solid">DATA × CONSCIOUSNESS</div>
+</header>
+
+<section class="hero">
+  <div class="asterisk">✳</div>
+  <h1>Source, <em>shelved.</em></h1>
+  <p>Every offering, packaged like something you'd pick off a shelf. Drag to rotate. Tap to open.</p>
+  <div class="scroll-cue">↓ ENTER THE AISLE</div>
+</section>
+
+<section class="aisle">
+  <div class="aisle-head">
+    <span>NET WT. INFINITE · BEST BEFORE: NEVER</span>
+    <h2>The Shelf</h2>
+  </div>
+  <div class="shelf" id="shelf"></div>
+</section>
+
+<footer>
+  <a class="kofi" href="https://ko-fi.com/shamathakur" target="_blank">☕ Support the work</a>
+  <div class="socials">
+    <a href="https://instagram.com/shama_thakur77" target="_blank">INSTAGRAM</a>
+    <a href="https://pinterest.com/thkrshama" target="_blank">PINTEREST</a>
+    <a href="https://linkedin.com/in/shama-t-b7250632" target="_blank">LINKEDIN</a>
+    <a href="https://substack.com/@shamathakur" target="_blank">SUBSTACK</a>
+    <a href="https://medium.com/@shamathakur77" target="_blank">MEDIUM</a>
+    <a href="https://shamathakur.carrd.co" target="_blank">SITE</a>
+  </div>
+  <div class="copy">© SOVEREIGN BY SOURCE · DATA × CONSCIOUSNESS · STOCKHOLM</div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+const PRODUCTS = [
+  {id:'fre',tag:'DIGITAL · LIFETIME',name:'Frequency Studio',desc:'The web app. Tune your state, track your cycle, build in your aligned hours.',price:44,form:'can',c1:0x3a7d74,c2:0xf5f0e8,link:'https://frequencystudio.vercel.app/',cta:'OPEN →'},
+  {id:'pmt',tag:'PDF · INSTANT',name:'50 Claude Prompts',desc:'For data analysts who manifest. Plug-and-play prompts that do the thinking with you.',price:12,form:'bottle',c1:0xb85c38,c2:0xf5f0e8,link:'https://shamathakur.gumroad.com/l/mqcoy',cta:'GET IT →'},
+  {id:'sub',tag:'SUBSCRIPTION · MONTHLY',name:'Sovereign Letters',desc:'The Substack. Where the data brain meets the spiritual instinct. No woo, all signal.',price:7,form:'box',c1:0x16140f,c2:0xc9a84c,link:'https://sovereignbysource.substack.com',cta:'SUBSCRIBE →'},
+  {id:'aud',tag:'CONSULT · 60 MIN',name:'The Field Reading',desc:'A 1:1 soul-field session. Numerology, Human Design, and your data patterns, read like a chart.',price:222,form:'box',c1:0xc9a84c,c2:0x0d0c0a,link:'mailto:thkrshama@gmail.com?subject=Field%20Reading%20booking&body=Hi%20Shama%2C%20I%27d%20like%20to%20book%20a%20Field%20Reading.',cta:'BOOK →'}
+];
+
+const shelf = document.getElementById('shelf');
+const scenes = [];
+
+/* dust particles */
+const dust=document.getElementById('dust');
+for(let i=0;i<26;i++){
+  const d=document.createElement('i');
+  d.style.left=Math.random()*100+'%';
+  d.style.animationDuration=(10+Math.random()*16)+'s';
+  d.style.animationDelay=(-Math.random()*16)+'s';
+  const s=2+Math.random()*3;d.style.width=s+'px';d.style.height=s+'px';
+  dust.appendChild(d);
+}
+
+function makeBarcode(){
+  let h='';for(let i=0;i<40;i++){h+=`<i style="height:${20+Math.random()*14}px"></i>`}return h;
+}
+
+/* rounded box helper (beveled edges instead of sharp blocks) */
+function roundedBox(w,h,d,r,mat){
+  const shape=new THREE.Shape();
+  const x=-w/2,y=-h/2;
+  shape.moveTo(x+r,y);
+  shape.lineTo(x+w-r,y);
+  shape.quadraticCurveTo(x+w,y,x+w,y+r);
+  shape.lineTo(x+w,y+h-r);
+  shape.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  shape.lineTo(x+r,y+h);
+  shape.quadraticCurveTo(x,y+h,x,y+h-r);
+  shape.lineTo(x,y+r);
+  shape.quadraticCurveTo(x,y,x+r,y);
+  const geo=new THREE.ExtrudeGeometry(shape,{depth:d,bevelEnabled:true,bevelThickness:.06,bevelSize:.06,bevelSegments:3,steps:1});
+  geo.center();
+  return new THREE.Mesh(geo,mat);
+}
+
+function buildProduct(form,c1,c2){
+  const g=new THREE.Group();
+  if(form==='box'){
+    const body=roundedBox(1.7,2.3,0.95,0.12,
+      new THREE.MeshStandardMaterial({color:c1,roughness:.45,metalness:.2}));
+    g.add(body);
+    const label=new THREE.Mesh(new THREE.PlaneGeometry(1.32,1.65),
+      new THREE.MeshStandardMaterial({color:c2,roughness:.7}));
+    label.position.z=0.52;g.add(label);
+    const stripe=new THREE.Mesh(new THREE.PlaneGeometry(1.32,0.2),
+      new THREE.MeshStandardMaterial({color:0xb85c38,roughness:.6}));
+    stripe.position.set(0,0.52,0.53);g.add(stripe);
+    const dot=new THREE.Mesh(new THREE.CircleGeometry(0.12,32),
+      new THREE.MeshStandardMaterial({color:0xc9a84c,metalness:.6,roughness:.3}));
+    dot.position.set(0,-0.45,0.53);g.add(dot);
+  } else if(form==='can'){
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(0.85,0.85,2.2,48),
+      new THREE.MeshStandardMaterial({color:c1,roughness:.3,metalness:.55}));
+    g.add(body);
+    const ring=new THREE.Mesh(new THREE.CylinderGeometry(0.87,0.87,0.55,48),
+      new THREE.MeshStandardMaterial({color:c2,roughness:.45,metalness:.35}));
+    g.add(ring);
+    const lid=new THREE.Mesh(new THREE.CylinderGeometry(0.86,0.86,0.1,48),
+      new THREE.MeshStandardMaterial({color:0xc9a84c,metalness:.8,roughness:.2}));
+    lid.position.y=1.12;g.add(lid);
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(0.84,0.84,0.1,48),
+      new THREE.MeshStandardMaterial({color:0xc9a84c,metalness:.7,roughness:.3}));
+    base.position.y=-1.12;g.add(base);
+  } else { // bottle
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(0.72,0.72,1.7,48),
+      new THREE.MeshStandardMaterial({color:c1,roughness:.15,metalness:.1,transparent:true,opacity:.9}));
+    g.add(body);
+    const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.46,0.72,40),
+      new THREE.MeshStandardMaterial({color:c1,roughness:.18,transparent:true,opacity:.9}));
+    neck.position.y=1.2;g.add(neck);
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.31,0.31,0.38,40),
+      new THREE.MeshStandardMaterial({color:0xc9a84c,metalness:.7,roughness:.25}));
+    cap.position.y=1.66;g.add(cap);
+    const lbl=new THREE.Mesh(new THREE.CylinderGeometry(0.73,0.73,0.95,48,1,true),
+      new THREE.MeshStandardMaterial({color:c2,roughness:.55,side:THREE.DoubleSide}));
+    lbl.position.y=-0.1;g.add(lbl);
+  }
+  return g;
+}
+
+function initCard(p){
+  const card=document.createElement('div');
+  card.className='product';
+  card.innerHTML=`
+    <div class="stage"><canvas></canvas></div>
+    <div class="product-meta">
+      <div class="tag">${p.tag}</div>
+      <h3>${p.name}</h3>
+      <div class="desc">${p.desc}</div>
+      <div class="price-row">
+        <div class="price">€${p.price}<small>.00</small></div>
+        <div style="text-align:center">
+          <div class="barcode">${makeBarcode()}</div>
+          <div class="barcode-num">7 ${String(p.price).padStart(3,'0')}4 ${p.id.toUpperCase()} 9</div>
+        </div>
+      </div>
+      <a class="add" href="${p.link}" target="_blank" rel="noopener">${p.cta}</a>
+    </div>`;
+  shelf.appendChild(card);
+
+  const canvas=card.querySelector('canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(42,canvas.clientWidth/320,0.1,100);
+  cam.position.set(0,0,5.8);
+
+  scene.add(new THREE.AmbientLight(0xffffff,0.45));
+  const key=new THREE.DirectionalLight(0xfff2d8,1.25);key.position.set(3,5,5);scene.add(key);
+  const rim=new THREE.DirectionalLight(0xc9a84c,0.8);rim.position.set(-4,2,-3);scene.add(rim);
+  const fill=new THREE.DirectionalLight(0x3a7d74,0.4);fill.position.set(0,-4,2);scene.add(fill);
+
+  const mesh=buildProduct(p.form,p.c1,p.c2);
+  scene.add(mesh);
+
+  /* faint floor reflection */
+  const refl=buildProduct(p.form,p.c1,p.c2);
+  refl.scale.y=-1;refl.position.y=-3.0;
+  refl.traverse(o=>{if(o.material){o.material=o.material.clone();o.material.opacity=(o.material.opacity||1)*0.12;o.material.transparent=true}});
+  scene.add(refl);
+
+  function resize(){
+    const w=canvas.clientWidth;renderer.setSize(w,320,false);
+    cam.aspect=w/320;cam.updateProjectionMatrix();
+  }
+  resize();window.addEventListener('resize',resize);
+
+  let dragging=false,px=0,py=0,auto=true;
+  canvas.addEventListener('pointerdown',e=>{dragging=true;auto=false;px=e.clientX;py=e.clientY;canvas.style.cursor='grabbing'});
+  window.addEventListener('pointerup',()=>{dragging=false;canvas.style.cursor='grab'});
+  window.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    mesh.rotation.y+=(e.clientX-px)*0.01;
+    mesh.rotation.x+=(e.clientY-py)*0.01;
+    refl.rotation.y=mesh.rotation.y;refl.rotation.x=-mesh.rotation.x;
+    px=e.clientX;py=e.clientY;
+  });
+  card.addEventListener('mouseenter',()=>gsap.to(mesh.scale,{x:1.08,y:1.08,z:1.08,duration:.4}));
+  card.addEventListener('mouseleave',()=>gsap.to(mesh.scale,{x:1,y:1,z:1,duration:.4}));
+
+  scenes.push({renderer,scene,cam,mesh,refl,bob:Math.random()*6.28,get auto(){return auto}});
+}
+
+PRODUCTS.forEach(initCard);
+
+let t=0;
+(function loop(){
+  requestAnimationFrame(loop);
+  t+=0.01;
+  scenes.forEach((s,i)=>{
+    if(s.auto){s.mesh.rotation.y+=0.006;s.refl.rotation.y=s.mesh.rotation.y;}
+    const y=Math.sin(t+s.bob)*0.08;
+    s.mesh.position.y=y;s.refl.position.y=-3.0+y;
+    s.renderer.render(s.scene,s.cam);
+  });
+})();
+
+/* scroll reveal */
+const io=new IntersectionObserver(es=>{
+  es.forEach((e,i)=>{if(e.isIntersecting){
+    setTimeout(()=>e.target.classList.add('in'),(i%3)*120);
+    io.unobserve(e.target);
+  }});
+},{threshold:.15});
+document.querySelectorAll('.product').forEach(c=>io.observe(c));
+
+/* hero entrance */
+gsap.from('.hero h1',{y:40,opacity:0,duration:1,ease:'power3.out'});
+gsap.from('.hero p',{y:20,opacity:0,duration:1,delay:.3});
+</script>
+</body>
+</html>
